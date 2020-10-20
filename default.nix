@@ -3,6 +3,7 @@
   pypiDataRev ? (builtins.fromJSON (builtins.readFile ./mach_nix/nix/PYPI_DEPS_DB.json)).rev,
   pypiDataSha256 ? (builtins.fromJSON (builtins.readFile ./mach_nix/nix/PYPI_DEPS_DB.json)).sha256,
   python ? "python3",
+  flattenTree,
   ...
 }:
 
@@ -49,9 +50,7 @@ let
     else
       (import ./mach_nix/nix/mkPython.nix { inherit pkgs pypiDataRev pypiDataSha256; })
         python (l.throwOnDeprecatedArgs caller args);
-
-in
-rec {
+  originalDefault = rec {
   # the mach-nix cmdline tool derivation
   mach-nix = python_machnix.pkgs.buildPythonPackage rec {
     pname = "mach-nix";
@@ -96,4 +95,12 @@ rec {
 
   # this might beuseful for someone
   inherit (l) mergeOverrides;
+};
+in flattenTree {
+  mkPython = originalDefault.mkPython;
+  mach-nix = originalDefault.mach-nix;
+  "with" = originalDefault.pythonWith;
+  pythonWith = originalDefault.pythonWith;
+  shellWith = originalDefault.shellWith;
+  dockerImageWith = originalDefault.dockerImageWith;
 }
