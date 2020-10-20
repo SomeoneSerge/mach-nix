@@ -10,13 +10,16 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        mach-nix-default = import ./default.nix {inherit pkgs;};
+        mach-nix-default = import ./default.nix {
+          inherit pkgs;
+          flattenTree = flake-utils.lib.flattenTree;
+        };
       in rec
       {
         devShell = import ./shell.nix {
           inherit pkgs;
         };
-        packages = flake-utils.lib.flattenTree {
+        packages = {
           mach-nix = mach-nix-default.mach-nix;
           "with" = mach-nix-default.pythonWith;
           pythonWith = mach-nix-default.pythonWith;
@@ -24,10 +27,14 @@
           dockerImageWith = mach-nix-default.dockerImageWith;
         };
 
-        defaultPackage = packages."${system}".mach-nix.mach-nix;
+        defaultPackage = packages.mach-nix;
 
         apps.mach-nix = flake-utils.lib.mkApp { drv = packages.mach-nix.mach-nix; };
-        defaultApp = { type = "app"; program = "${defaultPackage."${system}"}/bin/mach-nix"; };
+        defaultApp = { type = "app"; program = "${defaultPackage}/bin/mach-nix"; };
+
+        lib = {
+          mkPython = mach-nix-default.mkPython;
+        };
       }
   );
 }
