@@ -10,6 +10,7 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }:
+  let systemDependent =
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -35,19 +36,22 @@
 
         lib = {
           inherit (mach-nix-default)
-            mkPython
-            mkPythonShell
-            mkDockerImage
-            mkOverlay
-            mkNixpkgs
-            mkPythonOverrides
+          mkPython
+          mkPythonShell
+          mkDockerImage
+          mkOverlay
+          mkNixpkgs
+          mkPythonOverrides
 
-            buildPythonPackage
-            buildPythonApplication
-            fetchPypiSdist
-            fetchPypiWheel
-            ;
+          buildPythonPackage
+          buildPythonApplication
+          fetchPypiSdist
+          fetchPypiWheel
+          ;
         };
       }
   );
+  in systemDependent // {
+    lib = systemDependent.lib.x86_64-linux; /* FIXME: */
+  };
 }
